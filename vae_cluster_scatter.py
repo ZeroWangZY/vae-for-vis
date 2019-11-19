@@ -5,20 +5,22 @@ from keras.layers import *
 from keras.models import Model
 from keras import backend as K
 import imageio,os
+import json 
 
 batch_size = 100
 latent_dim = 20
-epochs = 10
+epochs = 5
 num_classes = 2
 img_dim = 200
 filters = 16
 intermediate_dim = 256
 
 
-# 加载MNIST数据集
-(x_train, y_train_), (x_test, y_test_) = mnist.load_data()
-x_train = x_train.astype('float32') / 255.
-x_test = x_test.astype('float32') / 255.
+# 加载数据集
+scatters_data = []
+with open("data/scatters.json", 'r') as load_f:
+    scatters_data = json.load(load_f)
+x_train = np.array(scatters_data)
 x_train = x_train.reshape((-1, img_dim, img_dim, 1))
 
 
@@ -138,30 +140,28 @@ vae.add_loss(vae_loss)
 vae.compile(optimizer='adam')
 vae.summary()
 
-print(x_train)
 vae.fit(x_train,
         shuffle=True,
         epochs=epochs,
-        batch_size=batch_size,
-        validation_data=(x_test, None))
+        batch_size=batch_size)
 
 
 means = K.eval(gaussian.mean)
 x_train_encoded = encoder.predict(x_train)
 y_train_pred = classfier.predict(x_train_encoded).argmax(axis=1)
-x_test_encoded = encoder.predict(x_test)
-y_test_pred = classfier.predict(x_test_encoded).argmax(axis=1)
+
 
 
 def cluster_sample(path, category=0):
     """观察被模型聚为同一类的样本
     """
-    n = 8
+    n = 2
     figure = np.zeros((img_dim * n, img_dim * n))
     idxs = np.where(y_train_pred == category)[0]
     for i in range(n):
         for j in range(n):
             digit = x_train[np.random.choice(idxs)]
+            print(digit)
             digit = digit.reshape((img_dim, img_dim))
             figure[i * img_dim: (i + 1) * img_dim,
             j * img_dim: (j + 1) * img_dim] = digit
@@ -200,9 +200,3 @@ for i in range(10):
 print( 'train acc: %s' % (right / len(y_train_)))
 
 
-right = 0.
-for i in range(10):
-    _ = np.bincount(y_test_[y_test_pred == i])
-    right += _.max()
-
-print ('test acc: %s' % (right / len(y_test_)))

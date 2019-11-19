@@ -19,4 +19,4 @@ scatters_data = []
 with open("data/scatters.json", 'r') as load_f:
     scatters_data = json.load(load_f)
 print(len(scatters_data))
-gen_scatters_image(scatters_data, path='image/origin_scatters_sample5.png')
+gen_scatters_image(scatters_data, path='image/origin_scatters_sample6.png')
