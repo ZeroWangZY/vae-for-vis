@@ -2,9 +2,11 @@ from pydataset import data
 import json
 import numpy as np
 
+IMAGE_DIM = 28
+MARGIN = 2
+
 def gen_image(arr1, arr2):
-    IMAGE_DIM = 200
-    MARGIN = 10
+
     # init image
     result = [[0 for col in range(IMAGE_DIM)] for row in range(IMAGE_DIM)]
 
@@ -18,15 +20,17 @@ def gen_image(arr1, arr2):
         try:
             x = round(minP + ((maxP - minP) * (arr1[i] - min1)) / (max1 - min1))
             y = round(minP + ((maxP - minP) * (arr2[i] - min2)) / (max2 - min2))
-            for j in range(x - 2, x + 3):
-                for k in range(y - 2, y + 3):
+            for j in range(x - 1, x + 2):
+                for k in range(y - 1, y + 2):
                     result[j][k] += 1
-        except ValueError:
-            print('ValueError')
-        except ZeroDivisionError:
-            print('ZeroDivisionError')
+        except (ValueError, ZeroDivisionError):
+            pass
         result = np.array(result)
-    return (result / np.max(result)).tolist()
+    if np.max(result) <= 0:
+        return None
+    result = result / np.max(result)
+    print(np.max(result))
+    return result.tolist()
 
 
 images = []
@@ -34,7 +38,7 @@ datasets = data('datasets')['Item']
 count = 0
 for item in datasets:
     count += 1
-    if count > 20:
+    if count > 50:
         break
     dataset = data(item)
     columns = []
@@ -45,9 +49,12 @@ for item in datasets:
         continue
     for i in range(len(columns)):
         for j in range(1, len(columns)):
-            images.append(gen_image(columns[i], columns[j]))
+            d = gen_image(columns[i], columns[j])
+            if d != None:
+                images.append(d)
+            
 
-with open("data/scatters.json", "w") as f:
+with open("data/scatters_64.json", "w") as f:
     json.dump(images, f)
 
 
