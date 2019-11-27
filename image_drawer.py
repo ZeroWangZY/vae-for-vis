@@ -2,9 +2,10 @@ import numpy as np
 import imageio, os
 import json
 
+img_dim = 28
+
 
 def gen_scatters_image(scatters_data, path='scatters.png'):
-    img_dim = len(scatters_data[0])
     n = 10
     figure = np.zeros((img_dim * n, img_dim * n))
     for i in range(n):
@@ -16,8 +17,9 @@ def gen_scatters_image(scatters_data, path='scatters.png'):
 
 
 scatters_data = []
-with open("data/scatters_64.json", 'r') as load_f:
+with open("data/scatters_" + str(img_dim) + ".json", 'r') as load_f:
     scatters_data = json.load(load_f)
 print(len(scatters_data))
 print(np.max(scatters_data), np.min(scatters_data))
-gen_scatters_image(scatters_data, path='image/origin_scatters_sample_64.png')
+gen_scatters_image(scatters_data,
+                   path='image/origin_scatters_sample_' + str(img_dim) + '.png')

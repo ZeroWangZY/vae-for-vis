@@ -3,7 +3,7 @@ import json
 import numpy as np
 
 IMAGE_DIM = 28
-MARGIN = 2
+MARGIN = 0
 
 def gen_image(arr1, arr2):
 
@@ -20,16 +20,15 @@ def gen_image(arr1, arr2):
         try:
             x = round(minP + ((maxP - minP) * (arr1[i] - min1)) / (max1 - min1))
             y = round(minP + ((maxP - minP) * (arr2[i] - min2)) / (max2 - min2))
-            for j in range(x - 1, x + 2):
-                for k in range(y - 1, y + 2):
-                    result[j][k] += 1
+            # for j in range(x - 1, x + 2):
+            #     for k in range(y - 1, y + 2):
+            result[x-1][y-1] += 1
         except (ValueError, ZeroDivisionError):
             pass
         result = np.array(result)
     if np.max(result) <= 0:
         return None
     result = result / np.max(result)
-    print(np.max(result))
     return result.tolist()
 
 
@@ -54,7 +53,7 @@ for item in datasets:
                 images.append(d)
             
 
-with open("data/scatters_64.json", "w") as f:
+with open("data/scatters_" + str(IMAGE_DIM) + ".json", "w") as f:
     json.dump(images, f)
 
 

@@ -8,13 +8,13 @@ import imageio, os
 import json
 
 batch_size = 100
-latent_dim = 20
-epochs = 300
+latent_dim = 50
+epochs = 100
 num_classes = 9
-img_dim = 64
+img_dim = 56
 filters = 16
 intermediate_dim = 256
-kernel_size = 5
+kernel_size = 3
 
 # 加载数据集
 scatters_data = []
@@ -151,14 +151,17 @@ print(y_train_pred)
 def cluster_sample(path, category=0):
     """观察被模型聚为同一类的样本
     """
-    n = 5
+    n = 8
     figure = np.zeros((img_dim * n, img_dim * n))
     idxs = np.where(y_train_pred == category)[0]
     if len(idxs) == 0:
         return
     for i in range(n):
         for j in range(n):
-            digit = x_train[np.random.choice(idxs)]
+            index = i * n + j
+            if index >= len(idxs):
+                break
+            digit = x_train[idxs[index]]
             digit = digit.reshape((img_dim, img_dim))
             figure[i * img_dim:(i + 1) * img_dim, j * img_dim:(j + 1) *
                    img_dim] = digit
@@ -186,5 +189,5 @@ if not os.path.exists('samples'):
     os.mkdir('samples')
 
 for i in range(num_classes):
-    cluster_sample(u'samples/聚类类别_%s.png' % i, i)
-    random_sample(u'samples/类别采样_%s.png' % i, i)
+    cluster_sample('samples/聚类' + str(img_dim) + '_' + str(i) + '.png', category=i)
+    # random_sample('samples/采样' + str(img_dim) + '_' + str(i) + '.png')
