@@ -9,10 +9,9 @@ import json
 
 batch_size = 100
 latent_dim = 50
-epochs = 100
-num_classes = 9
+epochs = 200
+num_classes = 15
 img_dim = 112
-filters = 16
 intermediate_dim = 256
 kernel_size = 3
 
@@ -21,27 +20,20 @@ scatters_data = []
 with open("data/scatters_" + str(img_dim) + ".json", 'r') as load_f:
     scatters_data = json.load(load_f)
 x_train = np.array(scatters_data)
-# mean = np.mean(x_train)
-# std = np.std(x_train)
-# x_train = (x_train - mean) / (std)
 x_train = x_train.reshape((-1, img_dim, img_dim, 1))
 
 # 搭建模型
 x = Input(shape=(img_dim, img_dim, 1))
 h = x
 
-for i in range(2):
-    filters *= 2
-    h = Conv2D(filters=filters,
-               kernel_size=kernel_size,
-               strides=2,
-               padding='same')(h)
-    h = LeakyReLU(0.2)(h)
-    h = Conv2D(filters=filters,
-               kernel_size=kernel_size,
-               strides=1,
-               padding='same')(h)
-    h = LeakyReLU(0.2)(h)
+h = Conv2D(filters=32, kernel_size=7, strides=2, padding='same')(h)
+h = LeakyReLU(0.2)(h)
+h = Conv2D(filters=32, kernel_size=3, strides=1, padding='same')(h)
+h = LeakyReLU(0.2)(h)
+h = Conv2D(filters=32, kernel_size=3, strides=1, padding='same')(h)
+h = LeakyReLU(0.2)(h)
+h = Conv2D(filters=64, kernel_size=3, strides=1, padding='same')(h)
+h = LeakyReLU(0.2)(h)
 
 h_shape = K.int_shape(h)[1:]
 h = Flatten()(h)
@@ -55,18 +47,14 @@ h = z
 h = Dense(np.prod(h_shape))(h)
 h = Reshape(h_shape)(h)
 
-for i in range(2):
-    h = Conv2DTranspose(filters=filters,
-                        kernel_size=kernel_size,
-                        strides=1,
-                        padding='same')(h)
-    h = LeakyReLU(0.2)(h)
-    h = Conv2DTranspose(filters=filters,
-                        kernel_size=kernel_size,
-                        strides=2,
-                        padding='same')(h)
-    h = LeakyReLU(0.2)(h)
-    filters //= 2
+h = Conv2DTranspose(filters=64, kernel_size=3, strides=1, padding='same')(h)
+h = LeakyReLU(0.2)(h)
+h = Conv2DTranspose(filters=32, kernel_size=3, strides=1, padding='same')(h)
+h = LeakyReLU(0.2)(h)
+h = Conv2DTranspose(filters=32, kernel_size=3, strides=1, padding='same')(h)
+h = LeakyReLU(0.2)(h)
+h = Conv2DTranspose(filters=32, kernel_size=7, strides=2, padding='same')(h)
+h = LeakyReLU(0.2)(h)
 
 x_recon = Conv2DTranspose(filters=1,
                           kernel_size=kernel_size,
@@ -185,9 +173,14 @@ def random_sample(path, category=0, std=1):
     imageio.imwrite(path, figure * 255)
 
 
+folder_name = '15_200_112'
 if not os.path.exists('samples'):
     os.mkdir('samples')
-
+if not os.path.exists('samples/conv'):
+    os.mkdir('samples/conv')
+if not os.path.exists('samples/conv/' + folder_name):
+    os.mkdir('samples/conv/' + folder_name)
 for i in range(num_classes):
-    cluster_sample('samples/聚类' + str(img_dim) + '_' + str(i) + '.png', category=i)
+    cluster_sample('samples/conv/' + folder_name + str(i) + '.png',
+                   category=i)
     # random_sample('samples/采样' + str(img_dim) + '_' + str(i) + '.png')

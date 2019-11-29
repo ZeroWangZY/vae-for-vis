@@ -2,7 +2,7 @@ import numpy as np
 import imageio, os
 import json
 
-img_dim = 28
+img_dim = 112
 
 
 def gen_scatters_image(scatters_data, path='scatters.png'):
