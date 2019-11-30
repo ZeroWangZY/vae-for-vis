@@ -139,7 +139,7 @@ vae_loss = lamb * K.sum(xent_loss) + K.sum(kl_loss) + K.sum(cat_loss)
 
 
 vae.add_loss(vae_loss)
-vae.compile(optimizer='adam')
+vae.compile(optimizer='adam', loss='')
 vae.summary()
 
 print(x_train)
@@ -199,7 +199,8 @@ for i in range(num_classes):
 right = 0.
 for i in range(10):
     _ = np.bincount(y_train_[y_train_pred == i])
-    right += _.max()
+    right_cnt = _.max() if (_.size > 0) else 0
+    right += right_cnt
 
 print( 'train acc: %s' % (right / len(y_train_)))
 
@@ -207,6 +208,7 @@ print( 'train acc: %s' % (right / len(y_train_)))
 right = 0.
 for i in range(10):
     _ = np.bincount(y_test_[y_test_pred == i])
-    right += _.max()
+    right_cnt = _.max() if (_.size > 0) else 0
+    right += right_cnt
 
 print ('test acc: %s' % (right / len(y_test_)))
