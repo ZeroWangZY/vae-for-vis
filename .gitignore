@@ -3,3 +3,6 @@
 /.vscode
 /samples
 /results
+scatternet/data
+scatternet/__pycache__
+scatternet/model

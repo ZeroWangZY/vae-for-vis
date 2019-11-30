@@ -37,7 +37,7 @@ datasets = data('datasets')['Item']
 count = 0
 for item in datasets:
     count += 1
-    if count > 50:
+    if count > 10:
         break
     dataset = data(item)
     columns = []
