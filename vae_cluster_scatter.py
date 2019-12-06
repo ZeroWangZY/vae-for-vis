@@ -128,6 +128,9 @@ vae = Model(x, [x_recon, z_prior_mean, y])
 # 下面一大通都是为了定义loss
 z_mean = K.expand_dims(z_mean, 1)
 z_log_var = K.expand_dims(z_log_var, 1)
+print(z_log_var.shape, z_prior_mean.shape,  K.square(z_prior_mean).shape)
+print(z_log_var.shape, z_prior_mean.shape,  K.square(z_prior_mean).shape)
+print(z_log_var.shape, z_prior_mean.shape,  K.square(z_prior_mean).shape)
 
 lamb = 2.5  # 这是重构误差的权重，它的相反数就是重构方差，越大意味着方差越小。
 xent_loss = 0.5 * K.mean((x - x_recon)**2, 0)
