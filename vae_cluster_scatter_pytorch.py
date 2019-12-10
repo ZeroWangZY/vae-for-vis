@@ -47,20 +47,41 @@ latent_dim = 20
 num_classes = 9
 img_dim = 112
 intermediate_dim = 256
+# 无标签与有标签的比例
+label_ratio = 1
+unlabel_ratio = 10
 batch_size = args.batch_size
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 scatters_data = []
+scatters_label = []
+
 with open("data/scatters_" + str(img_dim) + ".json", 'r') as load_f:
     scatters_data = json.load(load_f)
+
+with open("data/scatters_labels_" + str(img_dim) + ".json", 'r') as load_f:
+    scatters_label_info = json.load(load_f)
+
+scatters_label = []
+for _, scatter_info in enumerate(scatters_label_info):
+    scatters_label.append(scatter_info["label"])
+
 x_train = torch.Tensor(scatters_data)
 x_train_numpy = np.array(scatters_data)
 x_train = torch.unsqueeze(x_train, 1)
-train_loader = torch.utils.data.DataLoader(x_train,
+
+# 要转成long，要不求交叉熵报类型错误
+y_train = torch.Tensor(scatters_label).long()
+y_train_numpy = np.array(scatters_label)
+
+# 先转换成 torch 能识别的 Dataset
+torch_dataset = torch.utils.data.TensorDataset(x_train, y_train)
+
+train_loader = torch.utils.data.DataLoader(torch_dataset,
                                            batch_size=args.batch_size,
                                            shuffle=True,
                                            **kwargs)
-x_train = x_train.cuda()
+# x_train = x_train.cuda()
 x_test = x_train[:128]
 
 
@@ -127,9 +148,26 @@ optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
 # writer.close()
 
+def calcLabelLoss(y, label, unlabel_ratio, label_ratio):
+    num_of_data = y.size()[0]
+    size_of_tuple = unlabel_ratio + label_ratio
+    num_of_tuple = num_of_data // size_of_tuple
+
+    label_loss = 0
+    loss_func = nn.CrossEntropyLoss()
+    for i in range(num_of_tuple):
+        start_index = i * size_of_tuple
+        end_index = start_index + label_ratio
+
+        sub_y = y[start_index: end_index]
+        sub_label = label[start_index: end_index]
+
+        label_loss = label_loss + loss_func(sub_y, sub_label)
+
+    return label_loss
 
 # Reconstruction + KL divergence losses summed over all elements and batch
-def loss_function(x_recon, x, mu, z_log_var, y, z_prior_mean, epoch):
+def loss_function(x_recon, x, mu, z_log_var, y, z_prior_mean, epoch, label):
     z_log_var = torch.unsqueeze(z_log_var, 1)
     lamb = 2.5  # 这是重构误差的权重，它的相反数就是重构方差，越大意味着方差越小。
     xent_loss = 0.5 * torch.mean(
@@ -137,31 +175,35 @@ def loss_function(x_recon, x, mu, z_log_var, y, z_prior_mean, epoch):
     kl_loss = -0.5 * (z_log_var - torch.mul(z_prior_mean, z_prior_mean))
     kl_loss = torch.mean(torch.matmul(torch.unsqueeze(y, 1), kl_loss), 0)
     cat_loss = torch.mean(y * torch.log(y + 1e-07), 0)
+    label_loss = calcLabelLoss(y, label, unlabel_ratio, label_ratio)
+    
     vae_loss = lamb * torch.sum(xent_loss) + torch.sum(kl_loss) + torch.sum(
-        cat_loss)
+        cat_loss) + label_loss
+
     writer.add_scalar('loss/kl_loss', torch.sum(kl_loss).item(), epoch)
     writer.add_scalar('loss/xent_loss', torch.sum(xent_loss).item(), epoch)
     writer.add_scalar('loss/cat_loss', torch.sum(cat_loss).item(), epoch)
+    writer.add_scalar('loss/label_loss', label_loss.item(), epoch)
     return vae_loss
 
 
 def train(epoch):
     model.train()
     train_loss = 0
-    for batch_idx, data in enumerate(train_loader):
+    for batch_idx, dataset in enumerate(train_loader):
+        data, label = dataset
         data = data.to(device)  # data.shape = [batch_size, 1, 28, 28]
         if epoch == 1:
             writer.add_graph(model, data)
         optimizer.zero_grad()
         recon_batch, mu, logvar, y, z_prior_mean = model(data)
-        loss = loss_function(recon_batch, data, mu, logvar, y, z_prior_mean,
-                             epoch)
+        loss = loss_function(recon_batch, data, mu, logvar, y, z_prior_mean, epoch, label)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
         # if batch_idx % args.log_interval == 0:
         print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-            epoch, len(data), len(train_loader.dataset),
+            epoch, batch_idx * batch_size, len(train_loader.dataset),
             100. * batch_idx / len(train_loader),
             loss.item() / len(data)))
     writer.add_scalar('loss/loss', train_loss / len(train_loader.dataset), epoch)

@@ -19,10 +19,6 @@ for (let i = 0, len = scatters.length; i < len; i += 1) {
   let labelInfo = {};
   scatter = scatters[i];
 
-  if (i === 835) {
-    debugger;
-  }
-
   deduplicatedScatter = scagnosticIndices.deduplicateDataset(scatter);
 
   normalizedScatter = scagnosticIndices.normalizeDataset(deduplicatedScatter);
@@ -48,4 +44,4 @@ for (let i = 0, len = scatters.length; i < len; i += 1) {
   labels.push(labelInfo);
 }
 
-fs.writeFileSync(pathForWriteOfScatters, JSON.stringify(labels, null, 4))
+fs.writeFileSync(pathForWriteOfScatters, JSON.stringify(labels, null, 4));
