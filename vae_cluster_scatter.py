@@ -140,7 +140,7 @@ cat_loss = K.mean(y * K.log(y + K.epsilon()), 0)
 vae_loss = lamb * K.sum(xent_loss) + K.sum(kl_loss) + K.sum(cat_loss)
 
 vae.add_loss(vae_loss)
-vae.compile(optimizer='adam')
+vae.compile(optimizer='adam', loss="")
 vae.summary()
 
 vae.fit(x_train, shuffle=True, epochs=epochs, batch_size=batch_size)

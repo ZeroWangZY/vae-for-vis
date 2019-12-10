@@ -1,9 +1,29 @@
 from pydataset import data
 import json
 import numpy as np
+import math
 
 IMAGE_DIM = 112
 MARGIN = 3
+
+def normalize(x, x_min, x_max):
+    return (x - x_min) / (x_max - x_min)
+
+def isItemValid(x, y):
+    return (not math.isnan(x)) and (not math.isnan(y))
+
+def gen_scatter(x_dataset, y_dataset):
+    scatter = []
+    for i in range(len(x_dataset)):
+        x_val = x_dataset[i]
+        y_val = y_dataset[i]
+        if isItemValid(x_val, y_val):
+            scatter.append({
+              'x': x_val,
+              'y': y_val
+            })
+    return scatter
+
 
 def gen_image(arr1, arr2):
 
@@ -17,9 +37,13 @@ def gen_image(arr1, arr2):
     minP = MARGIN
     maxP = IMAGE_DIM - MARGIN
     for i in range(len(arr1)):
+        x_val = arr1[i]
+        y_val = arr2[i]
+        if not isItemValid(x_val, y_val):
+            continue
         try:
-            x = round(minP + ((maxP - minP) * (arr1[i] - min1)) / (max1 - min1))
-            y = round(minP + ((maxP - minP) * (arr2[i] - min2)) / (max2 - min2))
+            x = round(minP + (maxP - minP) * normalize(arr1[i], min1, max1))
+            y = round(minP + (maxP - minP) * normalize(arr2[i], min2, max2))
             for j in range(x - 2, x + 3):
                 for k in range(y - 2, y + 3):
                     result[j][k] += 1
@@ -32,7 +56,12 @@ def gen_image(arr1, arr2):
     return result.tolist()
 
 
+# 散点数据
+scatters = []
+
+# 对应的图像数据
 images = []
+
 datasets = data('datasets')['Item']
 count = 0
 for item in datasets:
@@ -48,6 +77,9 @@ for item in datasets:
         continue
     for i in range(len(columns)):
         for j in range(1, len(columns)):
+            scatter = gen_scatter(columns[i], columns[j])
+            if scatter != None:
+                scatters.append(scatter)
             d = gen_image(columns[i], columns[j])
             if d != None:
                 images.append(d)
@@ -56,4 +88,5 @@ for item in datasets:
 with open("data/scatters_" + str(IMAGE_DIM) + ".json", "w") as f:
     json.dump(images, f)
 
-
+with open("data/scatters_points_" + str(IMAGE_DIM) + ".json", "w") as f:
+    json.dump(scatters, f, separators=(',', ':'), indent=4)
