@@ -9,18 +9,19 @@ import torch
 import torch.utils.data
 from torch import nn, optim
 from torch.nn import functional as F
-from torchvision import datasets, transforms
-from torchvision.utils import save_image
+from torch.utils.tensorboard import SummaryWriter
 
-parser = argparse.ArgumentParser(description='VAE MNIST Example')
+writer = SummaryWriter()
+
+parser = argparse.ArgumentParser(description='VAE cluster')
 parser.add_argument('--batch-size',
                     type=int,
-                    default=128,
+                    default=64,
                     metavar='N',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--epochs',
                     type=int,
-                    default=10,
+                    default=1010,
                     metavar='N',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--no-cuda',
@@ -60,6 +61,7 @@ train_loader = torch.utils.data.DataLoader(x_train,
                                            shuffle=True,
                                            **kwargs)
 x_train = x_train.cuda()
+x_test = x_train[:128]
 
 
 class VAE(nn.Module):
@@ -123,9 +125,11 @@ class VAE(nn.Module):
 model = VAE().to(device)
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
+# writer.close()
+
 
 # Reconstruction + KL divergence losses summed over all elements and batch
-def loss_function(x_recon, x, mu, z_log_var, y, z_prior_mean):
+def loss_function(x_recon, x, mu, z_log_var, y, z_prior_mean, epoch):
     z_log_var = torch.unsqueeze(z_log_var, 1)
     lamb = 2.5  # 这是重构误差的权重，它的相反数就是重构方差，越大意味着方差越小。
     xent_loss = 0.5 * torch.mean(
@@ -135,7 +139,9 @@ def loss_function(x_recon, x, mu, z_log_var, y, z_prior_mean):
     cat_loss = torch.mean(y * torch.log(y + 1e-07), 0)
     vae_loss = lamb * torch.sum(xent_loss) + torch.sum(kl_loss) + torch.sum(
         cat_loss)
-
+    writer.add_scalar('loss/kl_loss', torch.sum(kl_loss).item(), epoch)
+    writer.add_scalar('loss/xent_loss', torch.sum(xent_loss).item(), epoch)
+    writer.add_scalar('loss/cat_loss', torch.sum(cat_loss).item(), epoch)
     return vae_loss
 
 
@@ -144,28 +150,29 @@ def train(epoch):
     train_loss = 0
     for batch_idx, data in enumerate(train_loader):
         data = data.to(device)  # data.shape = [batch_size, 1, 28, 28]
+        if epoch == 1:
+            writer.add_graph(model, data)
         optimizer.zero_grad()
         recon_batch, mu, logvar, y, z_prior_mean = model(data)
-        loss = loss_function(recon_batch, data, mu, logvar, y, z_prior_mean)
+        loss = loss_function(recon_batch, data, mu, logvar, y, z_prior_mean,
+                             epoch)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
         # if batch_idx % args.log_interval == 0:
-        # print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-        #     epoch, batch_idx * len(data), len(train_loader.dataset),
-        #     100. * batch_idx / len(train_loader),
-        #     loss.item() / len(data)))
-
+        print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+            epoch, len(data), len(train_loader.dataset),
+            100. * batch_idx / len(train_loader),
+            loss.item() / len(data)))
+    writer.add_scalar('loss/loss', train_loss / len(train_loader.dataset), epoch)
     print('====> Epoch: {} Average loss: {:.4f}'.format(
         epoch, train_loss / len(train_loader.dataset)))
 
 
 def cluster_sample(y_train_pred, category=0, n=5):
-    print(len(y_train_pred))
     y_train_pred = np.array(y_train_pred)
     figure = np.zeros((img_dim * n, img_dim * n))
     idxs = np.where(y_train_pred == category)[0]
-
     if len(idxs) == 0:
         return figure
     for i in range(n):
@@ -181,7 +188,7 @@ def cluster_sample(y_train_pred, category=0, n=5):
     return output
 
 
-def draw_cluster_sample(y_train_pred, path, sub_width=5):
+def draw_cluster_sample_to_png(y_train_pred, path, sub_width=5):
     n = 0
     while n * n < num_classes:
         n += 1
@@ -194,33 +201,52 @@ def draw_cluster_sample(y_train_pred, path, sub_width=5):
             if index >= num_classes:
                 break
             sub_image = cluster_sample(y_train_pred,
-                                        category=index,
-                                        n=sub_width)
+                                       category=index,
+                                       n=sub_width)
             image[img_dim * i * sub_width:img_dim * (i + 1) *
-                    sub_width, img_dim * j * sub_width:img_dim * (j + 1) *
-                    sub_width] = sub_image
+                  sub_width, img_dim * j * sub_width:img_dim * (j + 1) *
+                  sub_width] = sub_image
     imageio.imwrite(path, image)
 
 
-if __name__ == "__main__":
-    # for epoch in range(1, args.epochs + 1):
-    for epoch in range(1, 500):
-        train(epoch)
-        with torch.no_grad():
-            ys = []
-            for i in range(1000):
-                batch = 128
-                if batch_size * (i+1) >= x_train_numpy.shape[0]:
-                    y = torch.argmax(model.classify(x_train[batch_size * i:x_train_numpy.shape[0]]), dim=1)
-                    ys += y.cpu().tolist()
-                    break
-                y = torch.argmax(model.classify(x_train[batch_size * i:batch_size * (i+1)]), dim=1)
-                ys += y.cpu().tolist()
-            draw_cluster_sample(ys,
-                                'results/' + str(epoch) + '.png',
-                                sub_width=5)
+def test_and_save(epoch):
+    ys = None
+    zs = None
+    for i in range(1000):
+        batch = args.epochs
+        if batch_size * (i + 1) >= x_train_numpy.shape[0]:
+            mu, logvar = model.encode(x_train[batch_size *
+                                              i:x_train_numpy.shape[0]])
+            z = model.reparameterize(mu, logvar)
+            y = torch.argmax(model.classifier(z), dim=1)
+            if i == 0:
+                ys = y
+                zs = z
+            else:
+                ys = torch.cat((ys, y), 0)
+                zs = torch.cat((zs, z), 0)
+            break
+        mu, logvar = model.encode(x_train[batch_size * i:batch_size * (i + 1)])
+        z = model.reparameterize(mu, logvar)
+        y = torch.argmax(model.classifier(z), dim=1)
+        if i == 0:
+            ys = y
+            zs = z
+        else:
+            ys = torch.cat((ys, y), 0)
+            zs = torch.cat((zs, z), 0)
+    # draw_cluster_sample_to_png(ys.cpu().tolist(),
+    #                            'results/' + str(epoch) + '.png',
+    #                            sub_width=5)
+    writer.add_embedding(zs,
+                         metadata=ys.cpu().tolist(),
+                         label_img=x_train,
+                         global_step=epoch)
 
-        # sample = torch.randn(64, 20).to(device)
-        # sample = model.decode(sample).cpu()
-        # save_image(sample.view(64, 1, 28, 28),
-        #            'results/sample_' + str(epoch) + '.png')
+
+if __name__ == "__main__":
+    for epoch in range(1, args.epochs + 1):
+        train(epoch)
+        if epoch / 10 == 0:
+            with torch.no_grad():
+                test_and_save(epoch)

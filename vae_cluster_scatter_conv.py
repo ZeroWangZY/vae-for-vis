@@ -1,13 +1,13 @@
 #! -*- coding: utf-8 -*-
 
 import numpy as np
-from keras.layers import *
-from keras.models import Model
-from keras import backend as K
+from tensorflow.keras.layers import *
+from tensorflow.keras.models import Model
+from tensorflow.keras import backend as K
 import imageio, os
 import json
 
-batch_size = 100
+batch_size = 128
 latent_dim = 50
 epochs = 200
 num_classes = 15
@@ -123,7 +123,7 @@ kl_loss = -0.5 * (z_log_var - K.square(z_prior_mean))
 kl_loss = K.mean(K.batch_dot(K.expand_dims(y, 1), kl_loss), 0)
 cat_loss = K.mean(y * K.log(y + K.epsilon()), 0)
 vae_loss = lamb * K.sum(xent_loss) + K.sum(kl_loss) + K.sum(cat_loss)
-
+print(xent_loss.shape, kl_loss.shape, cat_loss.shape)
 vae.add_loss(vae_loss)
 vae.compile(optimizer='adam')
 vae.summary()
@@ -181,6 +181,5 @@ if not os.path.exists('samples/conv'):
 if not os.path.exists('samples/conv/' + folder_name):
     os.mkdir('samples/conv/' + folder_name)
 for i in range(num_classes):
-    cluster_sample('samples/conv/' + folder_name + str(i) + '.png',
-                   category=i)
+    cluster_sample('samples/conv/' + folder_name + str(i) + '.png', category=i)
     # random_sample('samples/采样' + str(img_dim) + '_' + str(i) + '.png')
