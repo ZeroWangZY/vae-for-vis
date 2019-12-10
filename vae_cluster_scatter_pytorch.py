@@ -247,6 +247,6 @@ def test_and_save(epoch):
 if __name__ == "__main__":
     for epoch in range(1, args.epochs + 1):
         train(epoch)
-        if epoch / 10 == 0:
+        if epoch % 10 == 0:
             with torch.no_grad():
                 test_and_save(epoch)
