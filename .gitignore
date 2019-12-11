@@ -6,3 +6,4 @@
 scatternet/data
 scatternet/__pycache__
 scatternet/model
+/runs

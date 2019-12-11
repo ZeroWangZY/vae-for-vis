@@ -44,8 +44,4 @@ for (let i = 0, len = scatters.length; i < len; i += 1) {
   labels.push(labelInfo);
 }
 
-<<<<<<< HEAD
-fs.writeFileSync(pathForWriteOfScatters, JSON.stringify(labels, null, 4))
-=======
 fs.writeFileSync(pathForWriteOfScatters, JSON.stringify(labels, null, 4));
->>>>>>> dev/lbr
