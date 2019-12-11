@@ -10,7 +10,8 @@ def gen_scatters_image(scatters_data, path='scatters.png'):
     figure = np.zeros((img_dim * n, img_dim * n))
     for i in range(n):
         for j in range(n):
-            digit = scatters_data[np.random.choice(len(scatters_data))]
+            length = len(scatters_data)
+            digit = 0 if length == 0 else scatters_data[np.random.choice(length)]
             figure[i * img_dim:(i + 1) * img_dim, j * img_dim:(j + 1) *
                    img_dim] = digit
     imageio.imwrite(path, (figure * 255))
