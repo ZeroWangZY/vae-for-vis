@@ -7,3 +7,4 @@ scatternet/data
 scatternet/__pycache__
 scatternet/model
 /runs
+/node_modules

@@ -4,9 +4,12 @@ import json
 
 img_dim = 112
 
+use_real = True
+
+file_prefix = "real_" if use_real else ""
 
 def gen_scatters_image(scatters_data, path='scatters.png'):
-    n = 10
+    n = 20
     figure = np.zeros((img_dim * n, img_dim * n))
     for i in range(n):
         for j in range(n):
@@ -18,7 +21,7 @@ def gen_scatters_image(scatters_data, path='scatters.png'):
 
 
 scatters_data = []
-with open("data/scatters_" + str(img_dim) + ".json", 'r') as load_f:
+with open("data/" + file_prefix + "scatters_" + str(img_dim) + ".json", 'r') as load_f:
     scatters_data = json.load(load_f)
 print(len(scatters_data))
 print(np.max(scatters_data), np.min(scatters_data))

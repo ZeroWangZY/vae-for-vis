@@ -1,0 +1,23 @@
+{
+  "name": "vae-for-vis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZeroWangZY/vae-for-vis.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ZeroWangZY/vae-for-vis/issues"
+  },
+  "homepage": "https://github.com/ZeroWangZY/vae-for-vis#readme",
+  "dependencies": {
+    "eol": "^0.9.1"
+  }
+}

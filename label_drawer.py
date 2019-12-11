@@ -7,6 +7,9 @@ from image_drawer import gen_scatters_image
 img_dim = 112
 tgt_dir = "image/image_by_label/"
 
+use_real = True
+file_prefix = "real_" if use_real else ""
+
 # 默认从0号开始
 def find_num_of_class(scatters_label):
     labels = []
@@ -31,10 +34,10 @@ def get_indices_name(scatters_label):
 scatters_data = []
 scatters_label = []
 
-with open("data/scatters_" + str(img_dim) + ".json", 'r') as load_f:
+with open("data/" + file_prefix + "scatters_" + str(img_dim) + ".json", 'r') as load_f:
     scatters_data = json.load(load_f)
 
-with open("data/scatters_labels_" + str(img_dim) + ".json", 'r') as load_f:
+with open("data/" + file_prefix + "scatters_labels_" + str(img_dim) + ".json", 'r') as load_f:
     scatters_label = json.load(load_f)
 
 indices_name = get_indices_name(scatters_label)
