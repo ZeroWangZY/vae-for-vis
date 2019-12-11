@@ -80,7 +80,7 @@ train_loader = torch.utils.data.DataLoader(torch_dataset,
                                            batch_size=args.batch_size,
                                            shuffle=True,
                                            **kwargs)
-# x_train = x_train.cuda()
+x_train = x_train.cuda()
 x_test = x_train[:128]
 
 
@@ -166,7 +166,7 @@ def calcLabelLoss(y, label, unlabel_ratio, label_ratio):
     return label_loss
 
 # Reconstruction + KL divergence losses summed over all elements and batch
-def loss_function(x_recon, x, mu, z_log_var, y, z_prior_mean):
+def loss_function(x_recon, x, mu, z_log_var, y, z_prior_mean, label):
     z_log_var = torch.unsqueeze(z_log_var, 1)
     lamb = 2.5  # 这是重构误差的权重，它的相反数就是重构方差，越大意味着方差越小。
     xent_loss = 0.5 * torch.mean(
@@ -177,9 +177,9 @@ def loss_function(x_recon, x, mu, z_log_var, y, z_prior_mean):
     label_loss = calcLabelLoss(y, label, unlabel_ratio, label_ratio)
     
     vae_loss = lamb * torch.sum(xent_loss) + torch.sum(kl_loss) + torch.sum(
-        cat_loss)
+        cat_loss) + label_loss
     return vae_loss, torch.sum(xent_loss), torch.sum(kl_loss), torch.sum(
-        cat_loss)
+        cat_loss), label_loss
 
 
 def train(epoch, writer):
@@ -188,19 +188,22 @@ def train(epoch, writer):
     train_xent_loss = 0
     train_kl_loss = 0
     train_cat_loss = 0
-    for batch_idx, data in enumerate(train_loader):
+    train_label_loss = 0
+    for batch_idx, (data, label) in enumerate(train_loader):
         data = data.to(device)  # data.shape = [batch_size, 1, 28, 28]
+        label = label.to(device)
         if epoch == 1:
             writer.add_graph(model, data)
         optimizer.zero_grad()
         recon_batch, mu, logvar, y, z_prior_mean = model(data)
-        loss, xent_loss, kl_loss, cat_loss = loss_function(
-            recon_batch, data, mu, logvar, y, z_prior_mean)
+        loss, xent_loss, kl_loss, cat_loss, label_loss = loss_function(
+            recon_batch, data, mu, logvar, y, z_prior_mean, label)
         loss.backward()
         train_loss += loss.item()
         train_xent_loss += xent_loss.item()
         train_kl_loss += kl_loss.item()
         train_cat_loss += cat_loss.item()
+        train_label_loss += label_loss.item()
         optimizer.step()
         # if batch_idx % args.log_interval == 0:
         print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -215,6 +218,8 @@ def train(epoch, writer):
                       train_xent_loss / len(train_loader.dataset), epoch)
     writer.add_scalar('loss/cat_loss',
                       train_cat_loss / len(train_loader.dataset), epoch)
+    writer.add_scalar('loss/label_loss',
+                      train_label_loss / len(train_loader.dataset), epoch)
     print('====> Epoch: {} Average loss: {:.4f}'.format(
         epoch, train_loss / len(train_loader.dataset)))
 
@@ -295,7 +300,7 @@ def test_and_save(epoch):
 
 
 if __name__ == "__main__":
-    writer = SummaryWriter(log_dir='runs/unsupervised-2')
+    writer = SummaryWriter(log_dir='runs/semisupervised-1')
     for epoch in range(1, args.epochs + 1):
         train(epoch, writer)
         if epoch % 10 == 0:

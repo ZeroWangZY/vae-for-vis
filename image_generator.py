@@ -70,9 +70,6 @@ for item in datasets:
         continue
     for i in range(len(columns)):
         for j in range(1, len(columns)):
-            scatter = gen_scatter(columns[i], columns[j])
-            if scatter != None:
-                scatters.append(scatter)
             d = gen_image(columns[i], columns[j])
             if d != None:
                 image, scatter = d
