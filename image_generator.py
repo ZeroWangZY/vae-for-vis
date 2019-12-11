@@ -12,23 +12,12 @@ def normalize(x, x_min, x_max):
 def isItemValid(x, y):
     return (not math.isnan(x)) and (not math.isnan(y))
 
-def gen_scatter(x_dataset, y_dataset):
-    scatter = []
-    for i in range(len(x_dataset)):
-        x_val = x_dataset[i]
-        y_val = y_dataset[i]
-        if isItemValid(x_val, y_val):
-            scatter.append({
-              'x': x_val,
-              'y': y_val
-            })
-    return scatter
-
-
 def gen_image(arr1, arr2):
 
     # init image
     result = [[0 for col in range(IMAGE_DIM)] for row in range(IMAGE_DIM)]
+
+    scatter = []
 
     min1 = min(arr1)
     max1 = max(arr1)
@@ -44,6 +33,10 @@ def gen_image(arr1, arr2):
         try:
             x = round(minP + (maxP - minP) * normalize(arr1[i], min1, max1))
             y = round(minP + (maxP - minP) * normalize(arr2[i], min2, max2))
+            scatter.append({
+              'x': x_val,
+              'y': y_val
+            })
             for j in range(x - 2, x + 3):
                 for k in range(y - 2, y + 3):
                     result[j][k] += 1
@@ -53,7 +46,7 @@ def gen_image(arr1, arr2):
     if np.max(result) <= 0:
         return None
     result = result / np.max(result)
-    return result.tolist()
+    return result.tolist(), scatter
 
 
 # 散点数据
@@ -82,7 +75,9 @@ for item in datasets:
                 scatters.append(scatter)
             d = gen_image(columns[i], columns[j])
             if d != None:
-                images.append(d)
+                image, scatter = d
+                images.append(image)
+                scatters.append(scatter)
             
 
 with open("data/scatters_" + str(IMAGE_DIM) + ".json", "w") as f:
