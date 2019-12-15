@@ -7,11 +7,14 @@ const scagnosticIndices = require("./indices");
 
 const IMAGE_DIM = 112;
 
-const useReal = true;
+const useReal = false;
 const filePrefix = useReal ? "real_" : "";
+
+let limit = 10;
 
 const pathForReadOfScatters = path.join(__dirname, `../data/${filePrefix}scatters_points_${IMAGE_DIM}.json`);
 const pathForWriteOfScatters = path.join(__dirname, `../data/${filePrefix}scatters_labels_${IMAGE_DIM}.json`);
+const pathForWriteOfValidLabels = path.join(__dirname, `../data/${filePrefix}scatters_valid_labels_${IMAGE_DIM}.json`);
 
 function readBigJSON(filename, cb) {
   let output = "";
@@ -28,15 +31,30 @@ function readBigJSON(filename, cb) {
   });
 }
 
+function isIndicesValid(indices) {
+  const keys = Object.keys(indices);
+  let isValid = false;
+
+  for (let i = 0, len = keys.length; i < len; i += 1) {
+    if (indices[keys[i]] >= 0.9) {
+      isValid = true;
+      break;
+    }
+  }
+
+  return isValid;
+}
+
 function labelScatters(scatters) {
   let labels = [];
+  let validIndices = [];
 
   const prefix = "getC";
   const prefixTester = new RegExp(`^${prefix}`);
   const funcNames = Object.keys(scagnosticIndices).filter(funcName => prefixTester.test(funcName));
 
   for (let i = 0, len = scatters.length; i < len; i += 1) {
-    console.log(`labelling scatter #${i}`);
+    console.log(`labelling scatter #${i} / ${len}`);
 
     let labelInfo = {};
     scatter = scatters[i];
@@ -64,9 +82,19 @@ function labelScatters(scatters) {
     labelInfo["label"] = label;
 
     labels.push(labelInfo);
+
+    if (isIndicesValid(indices)) {
+      validIndices.push(i);
+      const len1 = validIndices.length;
+      console.log(`valid scatters: ${len1} / ${limit}`);
+      // if (len1 > limit) {
+      //   break;
+      // }
+    }
   }
 
-  fs.writeFileSync(pathForWriteOfScatters, JSON.stringify(labels, null, 4));
+  fs.writeFileSync(pathForWriteOfScatters, JSON.stringify(labels));
+  fs.writeFileSync(pathForWriteOfValidLabels, JSON.stringify(validIndices));
 }
 
 readBigJSON(pathForReadOfScatters, labelScatters);

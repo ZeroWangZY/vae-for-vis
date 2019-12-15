@@ -777,7 +777,6 @@ let scagnosticIndices = (function () {
   function getCSkew(dataset) {
     let mst = _getMSTPrim(_getAdjMatrix(dataset)),
         [tmp, ...tmpAdjLength] = mst.adjLength;
-
     tmpAdjLength.sort((a, b) => a - b);
 
     let q90 = tmpAdjLength[Math.round(tmpAdjLength.length * 0.9) - 1],
