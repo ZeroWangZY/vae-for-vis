@@ -4,7 +4,8 @@
 /samples
 /results
 scatternet/data
-scatternet/__pycache__
 scatternet/model
 /runs
 /node_modules
+/m1m2/MNIST
+/**/__pycache__
