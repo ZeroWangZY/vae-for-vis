@@ -74,18 +74,19 @@ def main():
     with open(path_to_read, 'r') as load_f:
         dataset = json.load(load_f)
 
-    images = []
+    images = {}
     class_name = list(dataset.keys())
     num_of_class = len(class_name)
     for i in range(num_of_class):
+        images[class_name[i]] = []
         scatters = dataset[class_name[i]]
         num_of_instance = len(scatters)
         for j in range(num_of_instance):
             scatter = scatters[j]
             [x_arr, y_arr, *_] = dict2arr(scatter)
             image = gen_image(x_arr, y_arr)
-            gen_scatters_image(image, path_to_write_imgs + class_name[i] + "_" + str(j) + ".png")
-            images.append(image)
+            # gen_scatters_image(image, path_to_write_imgs + class_name[i] + "_" + str(j) + ".png")
+            images[class_name[i]].append(image)
 
     with open(path_to_write, "w") as f:
         json.dump(images, f)

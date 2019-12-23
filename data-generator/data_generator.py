@@ -232,7 +232,7 @@ def gen_sin(x_domain, y_domain, num_per_class, max_num_plot):
 def main():
     x_domain = [0, 1]
     y_domain = x_domain
-    num_per_class = 6
+    num_per_class = 500
     max_num_plot = [100, 1000]
     class_categories = ["cluster1", "cluster2", "cluster3", "corr", "normal", "sin"]
     func_deliver = {
@@ -251,7 +251,8 @@ def main():
         dataset[class_name] = generator(x_domain, y_domain, num_per_class, max_num_plot)
 
     with open(path_to_write, "w") as f:
-        json.dump(dataset, f, separators=(',', ':'), indent=4)
+        json.dump(dataset, f)
+        # json.dump(dataset, f, separators=(',', ':'), indent=4)
 
 
 if __name__ == "__main__":
