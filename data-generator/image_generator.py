@@ -5,7 +5,8 @@ import imageio
 
 
 path_to_read = "data/scatters_generated.json"
-path_to_write = "data/images_generated.json"
+path_to_write_scatters = "data/images_generated.json"
+path_to_write_labels = "data/labels_generated.json"
 path_to_write_imgs = "data/png2/"
 IMAGE_DIM = 112
 MARGIN = 3
@@ -74,11 +75,11 @@ def main():
     with open(path_to_read, 'r') as load_f:
         dataset = json.load(load_f)
 
-    images = {}
+    images = []
+    labels = []
     class_name = list(dataset.keys())
     num_of_class = len(class_name)
     for i in range(num_of_class):
-        images[class_name[i]] = []
         scatters = dataset[class_name[i]]
         num_of_instance = len(scatters)
         for j in range(num_of_instance):
@@ -86,10 +87,14 @@ def main():
             [x_arr, y_arr, *_] = dict2arr(scatter)
             image = gen_image(x_arr, y_arr)
             # gen_scatters_image(image, path_to_write_imgs + class_name[i] + "_" + str(j) + ".png")
-            images[class_name[i]].append(image)
+            images.append(image)
+            labels.append({"label": i})
 
-    with open(path_to_write, "w") as f:
+    with open(path_to_write_scatters, "w") as f:
         json.dump(images, f)
+
+    with open(path_to_write_labels, "w") as f:
+        json.dump(labels, f)
 
 if __name__ == "__main__":
     main()

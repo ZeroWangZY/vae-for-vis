@@ -55,15 +55,21 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 scatters_data = []
 scatters_label = []
 
-with open("data/scatters_" + str(img_dim) + ".json", 'r') as load_f:
+# with open("data/scatters_" + str(img_dim) + ".json", 'r') as load_f:
+#     scatters_data = json.load(load_f)
+
+# with open("data/scatters_labels_" + str(img_dim) + ".json", 'r') as load_f:
+#     scatters_label_info = json.load(load_f)
+
+with open("data/images_generated.json", 'r') as load_f:
     scatters_data = json.load(load_f)
 
-with open("data/scatters_labels_" + str(img_dim) + ".json", 'r') as load_f:
+with open("data/labels_generated.json", 'r') as load_f:
     scatters_label_info = json.load(load_f)
 
 scatters_label = []
 for _, scatter_info in enumerate(scatters_label_info):
-    scatters_label.append(scatter_info["label"])
+    scatters_label.append(scatter_info["label"]) 
 
 x_train = torch.Tensor(scatters_data)
 x_train_numpy = np.array(scatters_data)
