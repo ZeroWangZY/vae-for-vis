@@ -1,7 +1,7 @@
 # Imports
 import torch
 from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter(log_dir='runs/semisupervised-2')
+writer = SummaryWriter(log_dir='runs/semisupervised-m2')
 cuda = torch.cuda.is_available()
 import numpy as np
 
@@ -22,7 +22,11 @@ z_dim = 32
 # 隐藏层配置
 h_dim = [2048, 1024, 512, 256, 128]
 # 输入空间数
-x_dim = img_dim ** 2 
+x_dim = img_dim ** 2
+
+num_valid = 1000
+
+labels_per_class = 100
 
 model = DeepGenerativeModel([x_dim, y_dim, z_dim, h_dim])
 
@@ -35,7 +39,7 @@ from datautils import get_mnist, get_scatters
 # Only use 10 labelled examples per class
 # The rest of the data is unlabelled.
 # labelled, unlabelled, validation = get_mnist("./", 64, 10, y_dim, cuda)
-labelled, unlabelled, validation = get_scatters("data/images_generated.json", "data/labels_generated.json", 300, batch_size, 100, y_dim, cuda)
+labelled, unlabelled, validation = get_scatters("data/images_generated.json", "data/labels_generated.json", num_valid, batch_size, labels_per_class, y_dim, cuda)
 alpha = 0.1 * len(unlabelled) / len(labelled)
 
 def binary_cross_entropy(r, x):

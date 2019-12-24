@@ -232,7 +232,7 @@ def gen_sin(x_domain, y_domain, num_per_class, max_num_plot):
 def main():
     x_domain = [0, 1]
     y_domain = x_domain
-    num_per_class = 500
+    num_per_class = 1000
     max_num_plot = [100, 1000]
     class_categories = ["cluster1", "cluster2", "cluster3", "corr", "normal", "sin"]
     func_deliver = {
