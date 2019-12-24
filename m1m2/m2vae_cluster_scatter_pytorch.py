@@ -10,7 +10,7 @@ sys.path.append("m1m2/semi-supervised")
 
 from models import DeepGenerativeModel, StackedDeepGenerativeModel
 
-num_epoch = 1010
+num_epoch = 200
 
 batch_size = 64
 

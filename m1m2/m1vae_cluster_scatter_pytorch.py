@@ -1,12 +1,15 @@
 # Imports
 import torch
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter(log_dir='runs/unsupervised-m1')
 cuda = torch.cuda.is_available()
 import numpy as np
 import sys
 sys.path.append("m1m2/semi-supervised")
 
+path_to_save_model = "m1m2/storage/"
 
-num_epoch = 1010
+num_epoch = 200
 
 batch_size = 64
 
@@ -20,6 +23,9 @@ h_dim = [2048, 1024, 512, 256, 128]
 # 输入空间数
 x_dim = img_dim ** 2
 
+num_valid = 1000
+
+labels_per_class = 0
 
 from models import VariationalAutoencoder
 from layers import GaussianSample
@@ -43,9 +49,9 @@ print(model._kld.__doc__)
 
 from datautils import get_mnist, get_scatters
 
-_, train, validation = get_mnist(location="./", batch_size=64)
+# _, train, validation = get_mnist(location="./", batch_size=64)
 
-_, train, validation = get_scatters("data/images_generated.json", "data/labels_generated.json", 300, batch_size, 100, y_dim, cuda)
+_, train, validation = get_scatters("data/images_generated.json", "data/labels_generated.json", num_valid, batch_size, labels_per_class, y_dim, cuda)
 
 # We use this custom BCE function until PyTorch implements reduce=False
 def binary_cross_entropy(r, x):
@@ -56,7 +62,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=3e-4, betas=(0.9, 0.999))
 
 
 
-for epoch in range(50):
+for epoch in range(1, num_epoch + 1):
     model.train()
     total_loss = 0
     for (u, _) in train:
@@ -75,14 +81,15 @@ for epoch in range(50):
         optimizer.step()
         optimizer.zero_grad()
 
-        total_loss += L.data[0]
+        total_loss += L.item()
 
     m = len(train)
 
-    if epoch % 10 == 0:
+    if epoch % 1 == 0:
         print(f"Epoch: {epoch}\tL: {total_loss/m:.2f}")
+        writer.add_scalar("loss/train_loss", total_loss / m, epoch)
 
-
+torch.save(model, path_to_save_model + 'm1.pkl')  # 保存整个网络
 
 # model.eval()
 # x_mu = model.sample(Variable(torch.randn(16, 32)))

@@ -8,4 +8,5 @@ scatternet/model
 /runs
 /node_modules
 /m1m2/MNIST
+/m1m2/storage
 /**/__pycache__
