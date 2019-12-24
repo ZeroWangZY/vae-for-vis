@@ -10,7 +10,7 @@ sys.path.append("m1m2/semi-supervised")
 
 from models import DeepGenerativeModel, StackedDeepGenerativeModel
 
-num_epoch = 200
+num_epoch = 100
 
 batch_size = 64
 
@@ -20,7 +20,7 @@ y_dim = 6
 # 潜空间数
 z_dim = 32
 # 隐藏层配置
-h_dim = [2048, 1024, 512, 256, 128]
+h_dim = [1024, 512, 128]
 # 输入空间数
 x_dim = img_dim ** 2
 

@@ -9,7 +9,7 @@ sys.path.append("m1m2/semi-supervised")
 
 path_to_save_model = "m1m2/storage/"
 
-num_epoch = 200
+num_epoch = 500
 
 batch_size = 64
 
@@ -30,7 +30,7 @@ labels_per_class = 0
 from models import VariationalAutoencoder
 from layers import GaussianSample
 model = VariationalAutoencoder([x_dim, z_dim, h_dim])
-model
+if cuda: model = model.cuda()
 
 
 
