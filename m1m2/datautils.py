@@ -80,9 +80,9 @@ class ScattersDataset(Dataset):
 
 
 
-def split_scatters(images, labels, num_train, random_seed):
+def split_scatters(images, labels, num_valid, random_seed):
     num_dataset = len(images)
-    num_valid = num_dataset - num_train
+    num_train = num_dataset - num_valid
     indices = list(range(num_dataset))
     split = num_valid
 
@@ -110,7 +110,7 @@ def split_scatters(images, labels, num_train, random_seed):
 
 
 
-def get_scatters(image_location="data/images_generated.json", label_location="data/labels_generated.json", num_train=300, batch_size=64, labels_per_class=100, n_labels=6, cuda=False):
+def get_scatters(image_location="data/images_generated.json", label_location="data/labels_generated.json", num_valid=300, batch_size=64, labels_per_class=100, n_labels=6, cuda=False):
     torch.manual_seed(1)
     random_seed = 1    # reproducible
 
@@ -120,7 +120,7 @@ def get_scatters(image_location="data/images_generated.json", label_location="da
         labels = json.load(load_f)
     labels = [item["label"] for item in labels]
 
-    scatters_train, scatters_valid = split_scatters(images, labels, num_train, random_seed)
+    scatters_train, scatters_valid = split_scatters(images, labels, num_valid, random_seed)
 
     onehot_converter = onehot(n_labels)
 

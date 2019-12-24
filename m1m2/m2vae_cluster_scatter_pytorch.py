@@ -22,7 +22,8 @@ z_dim = 32
 # 隐藏层配置
 h_dim = [2048, 1024, 512, 256, 128]
 # 输入空间数
-x_dim = img_dim ** 2
+x_dim = img_dim ** 2 
+
 model = DeepGenerativeModel([x_dim, y_dim, z_dim, h_dim])
 
 
