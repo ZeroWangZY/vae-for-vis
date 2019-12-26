@@ -198,6 +198,8 @@ class LadderDeepGenerativeModel(DeepGenerativeModel):
         self.decoder = nn.ModuleList(decoder_layers)
         self.reconstruction = Decoder([z_dim[0]+y_dim, h_dim, x_dim])
 
+        self.latent = None
+
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 init.xavier_normal(m.weight.data)
@@ -214,6 +216,10 @@ class LadderDeepGenerativeModel(DeepGenerativeModel):
             else:
                 x, (z, mu, log_var) = encoder(x)
             latents.append((mu, log_var))
+            
+            z_size = z.size()
+            if (z_size[0] == 64 or z_size[0] == 40) and z_size[1] == 8:
+                self.latent = z
 
         latents = list(reversed(latents))
 
@@ -232,6 +238,9 @@ class LadderDeepGenerativeModel(DeepGenerativeModel):
 
         x_mu = self.reconstruction(torch.cat([z, y], dim=1))
         return x_mu
+
+    def sample_z(self):
+        return self.latent;
 
     def sample(self, z, y):
         for i, decoder in enumerate(self.decoder):
