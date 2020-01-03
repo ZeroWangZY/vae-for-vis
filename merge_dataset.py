@@ -1,5 +1,6 @@
 import random
 import json
+import sys
 
 file_prefix = "real_";
 IMAGE_DIM = 112;
@@ -19,6 +20,8 @@ path_for_read_of_real_valid = "data/" + file_prefix + "scatters_valid_labels_" +
 
 path_for_write_of_merged_dataset = "rawdata/merged_" + str(IMAGE_DIM) + ".json";
 
+def is_label_invalid(label):
+    return label == 0 or label == 5
 
 def filter_func(arr, valid_set):
     ret = []
@@ -29,14 +32,23 @@ def filter_func(arr, valid_set):
 
 def compose_valid_dataset(scatters, imgs, labels, tgt_label, replace_label):
     ret_dataset = [];
-    length = len(labels);
+    length = len(labels)
 
     for i in range(length):
         if labels[i]["label"] == tgt_label:
+            indices = labels[i]["indices"]
+            indices_keys = list(indices.keys())
+            indices_values = list(indices.values())
+            indices_trim = []
+            for j in range(len(indices_values)):
+                if not is_label_invalid(j):
+                    indices_trim.append(indices_values[j])
+
             ret_dataset.append({
               "img": imgs[i],
               # "scatter": scatters[i],
-              "label": replace_label
+              "label": replace_label,
+              "indices": indices_trim
             })
 
     return ret_dataset;
@@ -81,7 +93,7 @@ label_mapping = [0, 0, 1, 2, 3, 5, 4, 5, 6]
 for i in range(9):
     print("round " + str(i))
 
-    if i == 0 or i == 5:
+    if is_label_invalid(i):
         continue
 
     replace_label = label_mapping[i];

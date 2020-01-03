@@ -576,9 +576,9 @@ let scagnosticIndices = (function () {
         hull,
         convexHull = [];
 
-    if (pointset.length < 4) {
-      return pointset.slice();
-    }
+    // if (pointset.length < 4) {
+    //   return pointset.slice();
+    // }
     points = _filterDuplicates(_sortByX(_toXy(pointset)));
     hull = _computeConvexHull(points);
 
@@ -675,6 +675,10 @@ let scagnosticIndices = (function () {
     d1 = _getEdgeLength(dataset[index], dataset[a]);
     d2 = _getEdgeLength(dataset[index], dataset[b]);
     d3 = _getEdgeLength(dataset[a], dataset[b]);
+
+    if (d1 === 0 || d2 === 0) {
+      return 0;
+    }
     return (d1 ** 2 + d2 ** 2 - d3 ** 2) / 2 / d1 / d2;
   }
 
@@ -723,7 +727,7 @@ let scagnosticIndices = (function () {
   }
 
   function getCConvex(dataset) {
-    const epsilon = 1e-5;
+    const epsilon = 1e-9;
     const areaOfAlphaHull = _getAHArea(dataset);
     const areaOfConvexHull = _getCHArea(dataset);
 
@@ -779,12 +783,14 @@ let scagnosticIndices = (function () {
         [tmp, ...tmpAdjLength] = mst.adjLength;
     tmpAdjLength.sort((a, b) => a - b);
 
+    const epsilon = 1e-9;
+
     let q90 = tmpAdjLength[Math.round(tmpAdjLength.length * 0.9) - 1],
         q50 = tmpAdjLength[Math.round(tmpAdjLength.length * 0.5) - 1],
         q10 = tmpAdjLength[Math.round(tmpAdjLength.length * 0.1) - 1 > 0 ?
           Math.round(tmpAdjLength.length * 0.1) - 1 : 0];
 
-    return (q90 - q50) / (q90 - q10);
+    return (q90 - q50 + epsilon) / (q90 - q10 + epsilon);
   }
 
   function getCClumpy(dataset) {
@@ -838,6 +844,8 @@ let scagnosticIndices = (function () {
         V2 = [],
         sumCos = 0;
 
+    const epsilon = 1e-9;
+
     for(let i = 0; i < mst.adjVex.length; i += 1) {
       degree.push(0);
     }
@@ -854,7 +862,7 @@ let scagnosticIndices = (function () {
     for(let i = 0; i < V2.length; i += 1) {
       sumCos += Math.abs(_getEdgeCos(dataset, mst, V2[i]));
     }
-    return sumCos / V2.length;
+    return (sumCos + epsilon) / (V2.length + epsilon);
   }
 
   return {
